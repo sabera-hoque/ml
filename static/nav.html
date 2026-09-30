@@ -1,0 +1,16 @@
+<nav>
+    <ul>
+        <li><a href="/" class="nav-link" data-page="health">Health Check</a></li>
+        <li><a href="/predict-page" class="nav-link" data-page="predict">Predict</a></li>
+    </ul>
+</nav>
+<script>
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        if ((link.getAttribute('data-page') === 'health' && currentPath === '/') ||
+            (link.getAttribute('data-page') === 'predict' && currentPath === '/predict-page')) {
+            link.classList.add('active');
+        }
+    });
+</script>
