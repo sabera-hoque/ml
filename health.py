@@ -15,6 +15,7 @@ def get_health_page() -> str:
     <head>
         <title>Health Check - ASD 4 ML Inference Demo</title>
         <link rel="stylesheet" href="/static/styles.css">
+        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     </head>
     <body>
         {NAV_HTML}

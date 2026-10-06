@@ -15,6 +15,26 @@ with open(NAV_PATH, "r") as f:
     NAV_HTML = f.read()
 
 
+def _preprocess_digit_image(image: Image.Image) -> np.ndarray:
+    """Convert uploaded image to the same 8x8 feature space used during training."""
+    # Match sklearn digits training data: 8x8 grayscale values in [0, 16]
+    image = image.convert("L")
+    image = image.resize((8, 8), Image.Resampling.LANCZOS)
+
+    # Threshold to a clean black-digit-on-white-background representation.
+    # This keeps the input consistent with the scikit-learn digits dataset.
+    image = image.point(lambda p: 255 if p > 200 else 0)
+    pixels = np.asarray(image, dtype=np.float32) / 255.0 * 16.0
+    features = pixels.reshape(1, -1)
+
+    # Reject blank or near-constant images. They collapse to a single class and
+    # produce bogus confidence values like 4 / 100%.
+    if np.allclose(features, features[0, 0]) or np.std(features) < 0.1:
+        raise ValueError("Image does not contain a recognizable digit")
+
+    return features
+
+
 def get_predict_page() -> str:
     """Returns the predict page HTML"""
     html = """
@@ -23,6 +43,7 @@ def get_predict_page() -> str:
     <head>
         <title>Predict - ASD 4 ML Inference Demo</title>
         <link rel="stylesheet" href="/static/styles.css">
+        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     </head>
     <body>
         ___NAV_PLACEHOLDER___
@@ -126,11 +147,8 @@ async def predict_digit(image_data: bytes) -> dict:
         Dictionary with prediction, confidence, model info, and input shape
     """
     try:
-        # Open and process image
-        image = Image.open(BytesIO(image_data)).convert("L")
-        image = image.resize((8, 8))
-        pixels = 16 - (np.asarray(image, dtype=np.float32) / 255.0 * 16)
-        features = pixels.reshape(1, -1)
+        image = Image.open(BytesIO(image_data))
+        features = _preprocess_digit_image(image)
 
         # Make prediction
         prediction = int(model.predict(features)[0])
@@ -143,5 +161,7 @@ async def predict_digit(image_data: bytes) -> dict:
             "model": "logistic-regression-digits",
             "input_shape": [8, 8]
         }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Invalid image: {exc}")
+        raise HTTPException(status_code=400, detail=f"Invalid image: {exc}") from exc
