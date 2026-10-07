@@ -1,6 +1,9 @@
 # ML Inference API — ASD 4 Application Project
 
-A small machine-learning inference service demonstrating how a trained model can be integrated into a reusable API.
+A small Python machine-learning inference service demonstrating the integration of a trained ML model into a reusable FastAPI application. The service validates image input, performs preprocessing, runs model inference, and returns a prediction with a confidence score. It also includes a health endpoint, Docker containerisation, API documentation, and deployment considerations.
+
+The project was developed as a practical demonstration of ML engineering skills relevant to AI/ML model integration and inference services.
+
 
 ## Why this project
 
